@@ -21,7 +21,6 @@
 
     GLKMatrix4 _modelViewProjectionMatrix;
     GLKMatrix3 _normalMatrix;
-    float _rotation;
 
     GLuint _vertexArray;
     GLuint _vertexBuffer;
@@ -30,15 +29,9 @@
     
     AVCaptureVideoPreviewLayer *_previewLayer;
 	AVCaptureVideoDataOutput *_videoDataOutput;
-	//BOOL detectFaces;
 	dispatch_queue_t _videoDataOutputQueue;
-//	AVCaptureStillImageOutput *_stillImageOutput;
-	//UIView *flashView;
 	UIImage *_square;
-	//BOOL isUsingFrontFacingCamera;
 	CIDetector *_faceDetector;
-	//CGFloat beginGestureScale;
-	//CGFloat effectiveScale;
 }
 
 @property (strong, nonatomic) EAGLContext *context;

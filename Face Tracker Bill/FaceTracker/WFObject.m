@@ -130,6 +130,9 @@
                                            [degenerateValues addObject:[values objectAtIndex:0]];
                                            
                                            for(NSString *pointVals in degenerateValues){
+                                               
+                                               if(pointVals.length == 0) continue; // I guess this can be empty
+                                               
                                                // Split these into constituent parts
                                                // 0==vert,1==tex,2==normal
                                                NSArray *indexes = [pointVals componentsSeparatedByString:@"/"];
@@ -143,21 +146,31 @@
                                                            if(verts.count > idx){
                                                                [triangleStripVerts addObject:[verts objectAtIndex:idx]];
                                                            }else{
-                                                               NSLog(@"ERROR verts.count (%i) <= idx (%i)", verts.count, idx);
+                                                               NSLog(@"ERROR verts.count (%i) <= idx (%i) val (%@) pointVals (%@)",
+                                                                     verts.count,
+                                                                     idx,
+                                                                     val,
+                                                                     pointVals);
                                                            }
                                                            break;
                                                        case 1: // Texture
                                                            if(texs.count > idx){
                                                                [triangleStripTexs addObject:[texs objectAtIndex:idx]];
                                                            }else{
-                                                               NSLog(@"ERROR texs.count (%i) <= idx (%i)", texs.count, idx);
+                                                               NSLog(@"ERROR texs.count (%i) <= idx (%i) val (%@)",
+                                                                     texs.count,
+                                                                     idx,
+                                                                     val);
                                                            }
                                                            break;
                                                        case 2: // Normal
                                                            if(normals.count > idx){
                                                                [triangleStripNormals addObject:[normals objectAtIndex:idx]];
                                                            }else{
-                                                               NSLog(@"ERROR normals.count (%i) <= idx (%i)", normals.count, idx);
+                                                               NSLog(@"ERROR normals.count (%i) <= idx (%i) val (%@)",
+                                                                     normals.count,
+                                                                     idx,
+                                                                     val);
                                                            }
                                                            break;
                                                    }
@@ -188,13 +201,12 @@
         
         // Convert the NSArrays into GLFloat arrays
         // NOTE: The NSArrays are collections of 3
-        
+
         _verts = malloc(sizeof(GLfloat) * triangleStripVerts.count * 3);
         _texCoords = malloc(sizeof(GLfloat) * triangleStripTexs.count * 2);
         _normals = malloc(sizeof(GLfloat) * triangleStripNormals.count * 3);
-        _vertsAndNormals = malloc(sizeof(GLfloat) * triangleStripVerts.count * 6);
-        _numVerts = triangleStripVerts.count;
-        
+        _vertsAndNormals = malloc(sizeof(GLfloat) * ((triangleStripVerts.count * 3) + (triangleStripNormals.count * 3)));
+
         int idx=0;
         for(NSArray *coords in triangleStripVerts){
             for(NSNumber *coord in coords){
@@ -205,12 +217,18 @@
                 _vertsAndNormals[(row*6)+column] = val;
             }
         }
+
+
         idx=0;
+         // Crazy. There are 3 tex coords... maybe kill the last one?
         for(NSArray *coords in triangleStripTexs){
-            for(NSNumber *coord in coords){
+            // NOTE: We're just lopping off the 3rd tex coord
+            for(int t=0;t<2;t++){
+                NSNumber *coord = [coords objectAtIndex:t];
                 _texCoords[idx++] = [coord floatValue];
             }
         }
+        
         idx=0;
         for(NSArray *coords in triangleStripNormals){
             for(NSNumber *coord in coords){
@@ -221,6 +239,8 @@
                 _vertsAndNormals[(row*6)+column+3] = val;
             }
         }
+         
+         _numVerts = triangleStripVerts.count; 
         
     }
     

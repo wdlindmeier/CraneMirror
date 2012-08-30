@@ -19,6 +19,7 @@
     NSTimeInterval _timeStarted;
     GLKVector3     _vecFace;
     GLKVector3     _vecDelta;
+    float          _prevFaceDist;
 }
 
 - (void)viewDidLoad
@@ -211,12 +212,13 @@
 // to detect features and for each draw the red square in a layer and set appropriate orientation
 - (void)drawFaceBoxesForFeatures:(NSArray *)features forVideoBox:(CGRect)clap orientation:(UIDeviceOrientation)orientation
 {
+    /* // FPS
     NSTimeInterval ti = [NSDate timeIntervalSinceReferenceDate];
     float numSecs = ti - _timeStarted;
     _timeStarted = ti;
-//    float fps = (float)_numFrames/numSecs;
     float fps = 1.0/numSecs;
-//    NSLog(@"fps: %f", fps);
+    NSLog(@"fps: %f", fps);
+    */
     
 	NSArray *sublayers = [NSArray arrayWithArray:[_previewLayer sublayers]];
 	NSInteger sublayersCount = [sublayers count], currentSublayer = 0;
@@ -350,7 +352,6 @@
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
-//    NSLog(@"capture output");
 	// got an image
 	CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
 	CFDictionaryRef attachments = CMCopyDictionaryOfAttachments(kCFAllocatorDefault, sampleBuffer, kCMAttachmentMode_ShouldPropagate);
@@ -424,25 +425,18 @@
     float aspect = fabsf(self.view.bounds.size.width / self.view.bounds.size.height);
     GLKMatrix4 projectionMatrix = GLKMatrix4MakePerspective(GLKMathDegreesToRadians(65.0f), aspect, 0.1f, 100.0f);
     
-    /*
-    self.effect.transform.projectionMatrix = projectionMatrix;
+    // NOTE:
+    // We want the base to be set back far enough that the crane fills the whole
+    // screen. (e.g. a unit of 1)
+    GLKMatrix4 baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -3.0f);
     
-     */
-
-    //GLKMatrix4 baseModelViewMatrix = GLKMatrix4MakeScale(0.1, 0.1, 0.1);
-    //baseModelViewMatrix = GLKMatrix4Translate(baseModelViewMatrix, 15.0, -15.0, -30.0);
     
-    GLKMatrix4 baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -4.0f);
+    // Hand-tweak the matrix for the crane model.
+    // TODO: Can this be done on a model-by-model basis?
+    // Scale
     GLKMatrix4 modelViewMatrix = GLKMatrix4MakeScale(0.05, 0.05, 0.05);
-    modelViewMatrix = GLKMatrix4Translate(modelViewMatrix, 9.0, -20.0, 0.0);
+    modelViewMatrix = GLKMatrix4Translate(modelViewMatrix, 10.0, -20.0, 0.0);
     
-    //GLKMatrix4 modelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, _vecFace.z * -1);
-    
-    // NOTE: Multiply the rotation by the Z distance because the object
-    // should rotate more the closer the user is.
-    // This may require some eye-balling to get the amount right.
-    // Is there a "right" way to do it?
-
     // TEST
     // The closer you are to the edge, the less it moves
     // NOTE:
@@ -452,8 +446,33 @@
     float xWeight = xyzWeight;//(1.0 - fabs(_vecFace.y)) * xyzWeight;
     float yWeight = xyzWeight;//(1.0 - fabs(_vecFace.x)) * xyzWeight;
 
+    // Z
+    // modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, _vecFace.z, 0.0f, 0.0f, 1.0f);
+    
+    // Calibrate a little bit, because the face will never be 1.0
+    float minCap = 0.0;
+    float maxCap = 0.5;
+    float capRange = maxCap - minCap;
+    float clampedZ = MIN(MAX(_vecFace.z, minCap), maxCap);
+    float calibratedZ = (clampedZ-minCap) / capRange;
+
+    float faceDist = (1.0-calibratedZ);
+    
+    float maxDist = -400.0f;
+    float actualZDist = faceDist * maxDist;
+    
+    int numDistAvgs = 10;
+    float frameDist = ((_prevFaceDist*numDistAvgs) + actualZDist) / (numDistAvgs+1);
+
+    modelViewMatrix = GLKMatrix4Translate(modelViewMatrix, 0, 0, frameDist);
+    
+    _prevFaceDist = frameDist;// actualZDist; // OR frameDist
+    
     // X
     float rotX = _vecFace.y * -1 * _vecFace.z * xWeight;
+    
+    // NOTE: This is crane only.
+    rotX += DegreesToRadians(12.5f);
     
     modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotX, 1.0f, 0.0f, 0.0f);
     
@@ -461,42 +480,15 @@
     float rotY = _vecFace.x * -1 * _vecFace.z * yWeight;
     modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotY, 0.0f, 1.0f, 0.0f);
     
-    // Z
-    // modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, _vecFace.z, 0.0f, 0.0f, 1.0f);
-    
-    modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix);
-    
+    // Adjust for the default crane orientation. 
+    // TODO: Can this be done on a model-by-model basis?
     modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, DegreesToRadians(10.0), 0.0f, 1.0f, 0.0f);
     
-//    modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, _rotation, 1.0f, 1.0f, 1.0f);
-    
-/*
-    GLKMatrix4 baseModelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -4.0f);
-    baseModelViewMatrix = GLKMatrix4Rotate(baseModelViewMatrix, _rotation, 0.0f, 1.0f, 0.0f);
-    
-    // Compute the model view matrix for the object rendered with GLKit
-
-    GLKMatrix4 modelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, -1.5f);
-    modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, _rotation, 1.0f, 1.0f, 1.0f);
     modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix);
-*/
-//    self.effect.transform.modelviewMatrix = modelViewMatrix;
-    
-    
-    // Compute the model view matrix for the object rendered with ES2
-    /*
-    modelViewMatrix = GLKMatrix4MakeTranslation(0.0f, 0.0f, 1.5f);
-    modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, _rotation, 1.0f, 1.0f, 1.0f);
-    modelViewMatrix = GLKMatrix4Multiply(baseModelViewMatrix, modelViewMatrix);
-    */
 
     _normalMatrix = GLKMatrix3InvertAndTranspose(GLKMatrix4GetMatrix3(modelViewMatrix), NULL);
     
     _modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, modelViewMatrix);
-    
-    _rotation += self.timeSinceLastUpdate * 0.5f;
-    
-//    NSLog(@"_vecFace: %@", NSStringFromGLKVector3(_vecFace));
     
 }
 
