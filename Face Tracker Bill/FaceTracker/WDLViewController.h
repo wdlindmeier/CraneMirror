@@ -18,12 +18,16 @@
 @interface WDLViewController : GLKViewController <AVCaptureVideoDataOutputSampleBufferDelegate>
 {
     GLuint _program;
+    GLuint _blurProgram;
 
     GLKMatrix4 _modelViewProjectionMatrix;
     GLKMatrix3 _normalMatrix;
 
-    GLuint _vertexArray;
-    GLuint _vertexBuffer;
+    GLuint _vertexArrayCrane;
+    GLuint _vertexBufferCrane;
+    
+    GLuint _vertexArraySquare;
+    GLuint _vertexBufferSquare;
     
     WFObject *_craneObj;
     
@@ -32,6 +36,35 @@
 	dispatch_queue_t _videoDataOutputQueue;
 	UIImage *_square;
 	CIDetector *_faceDetector;
+    
+    // FBO
+    
+    // Apple FBO
+    GLuint framebuffer;
+    GLuint fboTexture;
+    GLuint colorRenderbuffer;
+    int _fboWidth;
+    int _fboHeight;
+
+    // TODO: Rename
+    // TODO: Remove unnecessary
+    /*
+    GLuint fboHandle;
+    GLuint depthBuffer;
+    GLuint fboTex;
+    int fbo_width;
+    int fbo_height;
+    GLint defaultFBO;
+    */
+//    int uSamplerLoc;
+    
+    // test
+    //GLuint texId;
+    
+    // GL context
+    //EAGLContext *glContext;
+    
+    
 }
 
 @property (strong, nonatomic) EAGLContext *context;

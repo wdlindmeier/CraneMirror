@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A900413515EFFB6B0093A6CC /* BlurShader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = A900413415EFFB6B0093A6CC /* BlurShader.fsh */; };
+		A900413715EFFB790093A6CC /* BlurShader.vsh in Resources */ = {isa = PBXBuildFile; fileRef = A900413615EFFB790093A6CC /* BlurShader.vsh */; };
 		A9E9D9CE15EABA9D000DA0F2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9E9D9CD15EABA9D000DA0F2 /* UIKit.framework */; };
 		A9E9D9D015EABA9D000DA0F2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9E9D9CF15EABA9D000DA0F2 /* Foundation.framework */; };
 		A9E9D9D215EABA9D000DA0F2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9E9D9D115EABA9D000DA0F2 /* CoreGraphics.framework */; };
@@ -37,7 +39,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A9E9D9C915EABA9D000DA0F2 /* FaceTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FaceTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A900413415EFFB6B0093A6CC /* BlurShader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = BlurShader.fsh; path = Shaders/BlurShader.fsh; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.glsl; };
+		A900413615EFFB790093A6CC /* BlurShader.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = BlurShader.vsh; path = Shaders/BlurShader.vsh; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.glsl; };
+		A9E9D9C915EABA9D000DA0F2 /* CraneFBO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CraneFBO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9E9D9CD15EABA9D000DA0F2 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		A9E9D9CF15EABA9D000DA0F2 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		A9E9D9D115EABA9D000DA0F2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -49,8 +53,8 @@
 		A9E9D9DF15EABA9D000DA0F2 /* FaceTracker-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FaceTracker-Prefix.pch"; sourceTree = "<group>"; };
 		A9E9D9E015EABA9D000DA0F2 /* WDLAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WDLAppDelegate.h; sourceTree = "<group>"; };
 		A9E9D9E115EABA9D000DA0F2 /* WDLAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WDLAppDelegate.m; sourceTree = "<group>"; };
-		A9E9D9E315EABA9D000DA0F2 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; };
-		A9E9D9E515EABA9D000DA0F2 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; };
+		A9E9D9E315EABA9D000DA0F2 /* Shader.fsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.fsh; path = Shaders/Shader.fsh; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.glsl; };
+		A9E9D9E515EABA9D000DA0F2 /* Shader.vsh */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.glsl; name = Shader.vsh; path = Shaders/Shader.vsh; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.glsl; };
 		A9E9D9E715EABA9D000DA0F2 /* WDLViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WDLViewController.h; sourceTree = "<group>"; };
 		A9E9D9E815EABA9D000DA0F2 /* WDLViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WDLViewController.m; sourceTree = "<group>"; };
 		A9E9D9EB15EABA9E000DA0F2 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/WDLViewController_iPhone.xib; sourceTree = "<group>"; };
@@ -108,7 +112,7 @@
 		A9E9D9CA15EABA9D000DA0F2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A9E9D9C915EABA9D000DA0F2 /* FaceTracker.app */,
+				A9E9D9C915EABA9D000DA0F2 /* CraneFBO.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -189,6 +193,8 @@
 			children = (
 				A9E9D9E315EABA9D000DA0F2 /* Shader.fsh */,
 				A9E9D9E515EABA9D000DA0F2 /* Shader.vsh */,
+				A900413415EFFB6B0093A6CC /* BlurShader.fsh */,
+				A900413615EFFB790093A6CC /* BlurShader.vsh */,
 			);
 			name = Shaders;
 			sourceTree = "<group>";
@@ -210,7 +216,7 @@
 			);
 			name = FaceTracker;
 			productName = FaceTracker;
-			productReference = A9E9D9C915EABA9D000DA0F2 /* FaceTracker.app */;
+			productReference = A9E9D9C915EABA9D000DA0F2 /* CraneFBO.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -246,6 +252,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A9E9D9DC15EABA9D000DA0F2 /* InfoPlist.strings in Resources */,
+				A900413515EFFB6B0093A6CC /* BlurShader.fsh in Resources */,
+				A900413715EFFB790093A6CC /* BlurShader.vsh in Resources */,
 				A9E9D9E415EABA9D000DA0F2 /* Shader.fsh in Resources */,
 				A9E9D9E615EABA9D000DA0F2 /* Shader.vsh in Resources */,
 				A9E9D9EC15EABA9E000DA0F2 /* WDLViewController_iPhone.xib in Resources */,
@@ -361,7 +369,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "FaceTracker/FaceTracker-Prefix.pch";
 				INFOPLIST_FILE = "FaceTracker/FaceTracker-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = CraneFBO;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -372,7 +380,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "FaceTracker/FaceTracker-Prefix.pch";
 				INFOPLIST_FILE = "FaceTracker/FaceTracker-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = CraneFBO;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

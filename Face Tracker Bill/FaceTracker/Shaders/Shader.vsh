@@ -13,6 +13,8 @@ varying lowp vec4 colorVarying;
 
 uniform mat4 modelViewProjectionMatrix;
 uniform mat3 normalMatrix;
+uniform float distanceFloat;
+uniform float faceAlpha;
 
 void main()
 {
@@ -24,7 +26,13 @@ void main()
     float nDotVP = max(0.0, dot(eyeNormal, normalize(lightPosition)));
                  
 //    colorVarying = diffuseColor * nDotVP;
-    colorVarying = (1.0 + (diffuseColor * nDotVP)) * 0.5;
+    colorVarying = ((1.0 + (diffuseColor * nDotVP)) * 0.5) * (1.0-distanceFloat);
+    
+    // Fade w/out alpha:
+    colorVarying = colorVarying * faceAlpha;
+
+    // Fade w/ alpha:
+    //colorVarying.a = faceAlpha;
     
     gl_Position = modelViewProjectionMatrix * position;
 }

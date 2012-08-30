@@ -14,12 +14,17 @@
 #import <CoreVideo/CoreVideo.h>
 #import "WFObject.h"
 
+
 @implementation WDLViewController
 {
     NSTimeInterval _timeStarted;
     GLKVector3     _vecFace;
     GLKVector3     _vecDelta;
     float          _prevFaceDist;
+    float          _faceAlpha;
+    int            _numFacelessFrames;
+    
+    
 }
 
 - (void)viewDidLoad
@@ -35,8 +40,12 @@
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-    view.drawableMultisample = GLKViewDrawableMultisample4X;
     
+    // NOTE:
+    // This doesn't help use because we're drawing in the FBO
+//    view.drawableMultisample = GLKViewDrawableMultisample4X;
+    
+    _faceAlpha = 0.0f;
     
     _craneObj = [[WFObject alloc] initWithFilename:@"crane"];
     
@@ -234,18 +243,32 @@
 	}
 	
 	if ( featuresCount == 0) {
+        
+        _numFacelessFrames++;
+        
+        if(_numFacelessFrames > 10){
+            // Make the face more transparent
+            _faceAlpha *= 0.95;
+        }
+        
 		[CATransaction commit];
         
         // Just give it a little jiggle so it doesn't look so dead.
         // heh.
         float decay = 0.6;
         _vecDelta = GLKVector3Make(_vecDelta.x * decay, _vecDelta.y * decay, _vecDelta.z * decay);
+
         _vecFace = GLKVector3Make(_vecFace.x + _vecDelta.x + (float)(((arc4random() % 200) - 100.0f) * 0.00005f),
                                   _vecFace.y + _vecDelta.y + (float)(((arc4random() % 200) - 100.0f) * 0.00005f),
                                   _vecFace.z);
 
 		return; // early bail.
 	}
+    
+    _numFacelessFrames = 0;
+    
+    // Make the face more opaque
+    _faceAlpha += (1.0-_faceAlpha) * 0.025;
     
 	CGSize parentFrameSize = [_previewView frame].size;
 	NSString *gravity = [_previewLayer videoGravity];
@@ -299,7 +322,7 @@
         _vecDelta = GLKVector3Make(vecCam.x - _vecFace.x, vecCam.y - _vecFace.y, vecCam.z - _vecFace.z);
         
         // average the vecs so it doesn't look too choppy
-        int numAvgs = 1;
+        int numAvgs = 3;
         _vecFace = GLKVector3Make((vecCam.x + (_vecFace.x * numAvgs)) / (numAvgs + 1),
                                   (vecCam.y + (_vecFace.y * numAvgs)) / (numAvgs + 1),
                                   (vecCam.z + (_vecFace.z * numAvgs)) / (numAvgs + 1));
@@ -457,27 +480,31 @@
     float calibratedZ = (clampedZ-minCap) / capRange;
 
     float faceDist = (1.0-calibratedZ);
-    
-    float maxDist = -400.0f;
-    float actualZDist = faceDist * maxDist;
-    
     int numDistAvgs = 10;
-    float frameDist = ((_prevFaceDist*numDistAvgs) + actualZDist) / (numDistAvgs+1);
+    float frameDist = ((_prevFaceDist*numDistAvgs) + faceDist) / (numDistAvgs+1);
+    _prevFaceDist = frameDist;
 
-    modelViewMatrix = GLKMatrix4Translate(modelViewMatrix, 0, 0, frameDist);
+    float maxDist = -400.0f;
+    float actualZDist = frameDist * maxDist;
     
-    _prevFaceDist = frameDist;// actualZDist; // OR frameDist
+    modelViewMatrix = GLKMatrix4Translate(modelViewMatrix, 0, 0, actualZDist);
     
     // X
     float rotX = _vecFace.y * -1 * _vecFace.z * xWeight;
+    // Flip for orientation
     
     // NOTE: This is crane only.
     rotX += DegreesToRadians(12.5f);
     
-    modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotX, 1.0f, 0.0f, 0.0f);
-    
     // Y
     float rotY = _vecFace.x * -1 * _vecFace.z * yWeight;
+    
+    if(self.interfaceOrientation == UIInterfaceOrientationPortraitUpsideDown){
+        rotX = rotX * -1;
+        rotY = rotY * -1;
+    }
+    
+    modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotX, 1.0f, 0.0f, 0.0f);
     modelViewMatrix = GLKMatrix4Rotate(modelViewMatrix, rotY, 0.0f, 1.0f, 0.0f);
     
     // Adjust for the default crane orientation. 
@@ -492,30 +519,72 @@
     
 }
 
-- (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
+- (void)renderFBO
 {
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    // Start the framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);    
+    
+    // The Good Stuff
 
+    glViewport(0,0, _fboWidth, _fboHeight);
+    
+    const static BOOL FadeWithAlpha = NO; // IMPORTANT: Also change the shader
+    
+    if(FadeWithAlpha){
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    }else{
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Load up the vertext data
-    glBindVertexArrayOES(_vertexArray);
+    glBindVertexArrayOES(_vertexArrayCrane);
     
-    /*
-    // Render the object with GLKit
-    [self.effect prepareToDraw];
+    if(FadeWithAlpha){
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
     
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    */
-    
-    // Render the object again with ES2
     glUseProgram(_program);
     
     glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0, _modelViewProjectionMatrix.m);
     glUniformMatrix3fv(uniforms[UNIFORM_NORMAL_MATRIX], 1, 0, _normalMatrix.m);
-        
-//    glDrawArrays(GL_TRIANGLES, 0, 108);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, _craneObj.numVerts);
+    //glUniformMatrix3fv(uniforms[UNIFORM_NORMAL_MATRIX], 1, 0, _normalMatrix.m);
+    glUniform1f(uniforms[UNIFORM_DISTANCE_FLOAT], _prevFaceDist);
+    glUniform1f(uniforms[UNIFORM_FACE_ALPHA], _faceAlpha);
     
+    //    glDrawArrays(GL_TRIANGLES, 0, 108);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, _craneObj.numVerts);
+
+    // Render to FPO texture
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0);
+    
+}
+
+- (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
+{
+    [self renderFBO];
+ 
+    // reset to main framebuffer
+    [((GLKView *) self.view) bindDrawable];
+
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    glBindVertexArrayOES(_vertexArraySquare);
+    
+    glUseProgram(_blurProgram);
+    
+    // Binding the tex
+
+    glEnable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, fboTexture);
+    glUniform1i(blurUniforms[UNIFORM_BLUR_SAMPLER], 0);
+    
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
 }
 
 @end
